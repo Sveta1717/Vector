@@ -6,21 +6,25 @@ using namespace std;
 
 class Vector
 {
-	int size = 0; // количество действительно присутствующих элементов в контейнере
-	int capacity = 10; // ёмкость (вместительность, запас памяти)
-	int* data; // указатель на динамический массив данных
+	int size = 0; // С‚РµРєСѓС‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°СЃСЃРёРІРµ
+	int capacity = 10; // СЂРµР·РµСЂРІ РїР°РјСЏС‚Рё
+	int* data; // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РёРЅРєР°РїСЃСѓР»РёСЂРѕРІР°РЅРЅС‹Р№ РјР°СЃСЃРёРІ
 
 public:
 	Vector() : Vector(10)
 	{
 		// cout << "C-TOR WITHOUT PARAMS!\n";
-	}
+	}	
 
 	Vector(int capacity)
 	{
 		if (capacity < 10)
 		{
 			capacity = 10;
+		}
+		if (capacity > 500000000)
+		{
+			capacity = 500000000;
 		}
 		this->capacity = capacity;
 		data = new int[capacity];
@@ -30,13 +34,13 @@ public:
 	~Vector()
 	{
 		// cout << "DESTRUCTOR!\n";
-		if (data != nullptr) delete[] data;
+		delete[] data;
 	}
 
 private:
 	void EnsureCapacity(int count)
-	{
-		if (capacity >= count) return;
+	{		
+		if (capacity >= count) return;		
 		int new_capacity = capacity * 3 / 2 + 1;
 		int* temp = new int[new_capacity];
 
@@ -50,34 +54,56 @@ private:
 		capacity = new_capacity;
 		cout << "NEW CAP: " << capacity << "\n";
 	}
-
 public:
+
+	void SetCapacity()
+	{
+		if (capacity < 10)
+		{
+			capacity = 10;
+		}
+		this->capacity = capacity;
+		data = new int[capacity];
+	}
+
+	int Getsize()
+	{
+		return size;
+	}
+
+	int GetCapacity()
+	{
+		return capacity;
+	}
+
 	void PushBack(int value)
 	{
-		// EnsureCapacity(size + 1); // проверка, хватит ли места для нового элемента - делайте сами ;)
+		EnsureCapacity(size + 1); 
 		data[size++] = value;
-	}
+	}	
 
-	void PushFront(int value)
+	Vector operator+(const Vector& another)
 	{
-		// EnsureCapacity(size + 1);
-		for (int i = size; i > 0; i--)
+		Vector result;
+
+		result.capacity = this->capacity + another.capacity;
+		result.size = this->size + another.size;
+		result.data = new int[result.capacity];
+
+		int index = 0;
+		for (; index < this->size; index++)
 		{
-			data[i] = data[i - 1];
+			result.data[index] = this->data[index];
 		}
-		data[0] = value;
-		size++;
+
+		for (; index < this->size + another.size; index++)
+		{
+			result.data[index] = another.data[index - this->size];
+		}
+
+		return result;
 	}
 
-	void Clear()
-	{
-		// обнуление значений элементов делать необзятельно
-		// for (int i = 0; i < size; i++)
-		// {
-		//	 data[i] = 0;
-		// }
-		size = 0;
-	}
 
 	bool Equals(const Vector& another)const
 	{
@@ -97,12 +123,106 @@ public:
 		return false;
 	}
 
-	bool IsEmpty() const
+	void PushFront(int value)
+	{		
+		for (int i = size; i > 0; i--)
+		{
+			data[i] = data[i - 1];
+		}
+		data[0] = value;
+		size++;
+	}
+
+	void Insert(int index, int value)
+	{
+		if (index > 0 || index < size)
+		{
+			EnsureCapacity(size + 1);
+			size++;
+			
+			for (int i = size - 1; i >= index; i--)
+			{
+				data[i] = data[i - 1];
+			}
+			data[index] = value;
+		}
+		else
+		{
+			return;
+		}		
+	}
+
+	void RemoveAt(int index)
+	{
+		if (index > 0 || index < size)
+		{
+			for (int i = index; i < size; i++)
+			{
+				data[i] = data[i + 1];
+			}
+		}
+		else
+		{
+			return;
+		}
+
+		size--;
+	}
+
+	void Remove(int value) // РЅРµ РєРѕСЂСЂРµРєС‚РЅРѕ СЂР°Р±РѕС‚Р°РµС‚
+	{
+		int i = 0; 		
+			while (data[i] == value)
+			{
+				RemoveAt(i);
+				i--;				
+			}
+	}
+
+	void PopFront()
+	{
+		RemoveAt(0);
+	}
+
+	void PopBack()
+	{
+		RemoveAt(size - 1);
+	}
+
+	Vector(const Vector& original)
+	{
+		this->size = original.size;
+		this->capacity = original.capacity;
+		this->data = new int[original.capacity];
+		for (int i = 0; i < size; i++)
+		{
+			this->data[i] = original.data[i];
+		}
+	}
+
+	void Clear()
+	{
+		size = 0;
+	}
+
+	bool IsEmpty()
 	{
 		return size == 0;
 	}
 
-	void Print() const
+	void TrimToSize()
+	{
+		capacity = size;
+		int* tmp = new int[capacity];
+		for (int i = 0; i < size; i++)
+		{
+			tmp[i] = data[i];
+		}
+		delete[] data;
+		data = tmp;
+	}
+
+	void Print()
 	{
 		if (IsEmpty())
 		{
@@ -144,7 +264,7 @@ public:
 
 	void Reverse()
 	{
-		reverse(data, data + size);
+		reverse(data, data + size);		
 	}
 
 	void SortAsc()
@@ -164,44 +284,44 @@ public:
 
 	void  RandomFill()
 	{
-		//generate(data, data + size, rand() % 10);	// не получается (	
+		//generate(data, data + size, rand() % 10);	// РЅРµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ (	
 		for (int i = 0; i < size; i++)
 		{
 			data[i] = (rand() % 10);
 		}
-	}
+	} 
 
 	int GetElementAt(unsigned int index) const
 	{
-		if (index >= size) throw "Incorrect index!";
-		return data[index];
+		if (index >= size) throw "Incorrect index!";		
+		return data[index];		
 	}
 
-	Vector Clone(const Vector& clone) //переполнение буфера в data 
-	{
+	 Vector Clone(const Vector& clone) //РїРµСЂРµРїРѕР»РЅРµРЅРёРµ Р±СѓС„РµСЂР° РІ data 
+	{			
 		size = clone.size;
 		capacity = clone.capacity;
 		data = new int[clone.capacity];
 		for (int i = 0; i < size; i++)
 		{
 			data[i] = clone.data[i];
-		}
+		}		
 		return clone;
 	}
 
-	bool operator==(const Vector& another)
-	{
-		return Equals(another);
-	}
+	 bool operator==(const Vector& another)
+	 {		 
+		 return Equals(another);
+	 }
 
-	Vector operator=(const Vector& another)
-	{
+	 Vector operator=(const Vector& another)
+	 {
 		return Clone(another);
-	}
+	 }
 
 	const int& operator[](unsigned int index) const
 	{
-		if (index >= size) throw "Incorrect index!";
+		if (index >= size) throw "Incorrect index!"; 
 		return data[index];
 	}
 	friend istream& operator>>(istream& is, Vector& original)
@@ -214,7 +334,6 @@ public:
 		}
 		return is;
 	}
-	// остальные методы обязательно появятся здесь ;)
 };
 
 ostream& operator<<(ostream& os, Vector& original)
@@ -222,8 +341,6 @@ ostream& operator<<(ostream& os, Vector& original)
 	original.Print();
 	return os;
 }
-
-
 
 int main()
 {
@@ -239,7 +356,13 @@ int main()
 	cout << "last index of 5: " << ar.LastIndexOf(5) << "\n";
 	cout << "Element at index 2 is : " << ar.GetElementAt(2) << "\n";
 	ar.PushFront(4);
-	ar.Print();
+	ar.Print();	
+	cout << "Insert 1 at index 2: \n";
+	ar.Insert(2, 1);
+	cout << ar;
+	cout << "Delete at index 3: \n";
+	ar.RemoveAt (3);
+	cout << ar;
 	ar.Reverse();
 	ar.Print();
 	cout << "Ascending sort: \n";
@@ -265,8 +388,20 @@ int main()
 	ar.Print();
 	cout << "Clone 2: \n";
 	ar.Clone(ar1);
+	cout << ar;	
+	cout << "Insert 5 at index 1: \n";
+	ar.Insert(1, 5);
 	cout << ar;
-	cout << "Clear all \n";
+	cout << "Delete 5: \n";
+	ar.Remove(5);
+	cout << ar;
+	cout << "Delete first element: \n";
+	ar.PopFront();
+	cout << ar;
+	cout << "Delete last element: \n";
+	ar.PopBack();
+	cout << ar;
+	cout << "Clear all \n";	
 	ar.Clear();
 	ar.Print();
 }
